@@ -1,112 +1,63 @@
 from kivy.lang import Builder
-from kivy.clock import Clock
 from kivymd.app import MDApp
-from kivymd.uix.boxlayout import MDBoxLayout
-from kivymd.uix.card import MDCard
-from kivy.uix.image import Image
-from kivymd.uix.label import MDLabel
-from kivy.uix.image import Image  # стандартный виджет Kivy
-from kivymd.uix.scrollview import MDScrollView
-from kivymd.uix.list import MDList
-from kivymd.uix.appbar import MDTopAppBar
-from kivy.metrics import dp
-from kivy.utils import get_color_from_hex
+from kivymd.uix.list import MDListItem, MDListItemText, MDListItemLeading
 from kivy.uix.image import AsyncImage
-from kivy.uix.boxlayout import BoxLayout
-from kivymd.uix.card import MDCard
-
-from steam_api import get_steam_achievements
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
-API_KEY = os.getenv("STEAM_API_KEY") or "FA2A02009368B6111842D0D2A1311FA5"
-STEAM_ID = "76561198839380403"
-APP_ID = "292030"  # The Witcher 3
+from kivy.uix.scrollview import ScrollView
+from kivymd.uix.boxlayout import MDBoxLayout
+import requests
 
 KV = '''
-MDScreen:
+Screen:
     MDBoxLayout:
-        orientation: "vertical"
+        orientation: 'vertical'
 
         MDTopAppBar:
-            title: "Мои достижения"
-            elevation: 10
+            title: "Steam Library"
+            elevation: 4
 
         ScrollView:
-            MDList:
-                id: achievements_list
+            id: scroll
 '''
 
-class AchievementCard(MDCard):
-    def __init__(self, name, description, icon_url, achieved, **kwargs):
-        super().__init__(**kwargs)
-        self.size_hint = (1, None)
-        self.height = "100dp"
-        self.padding = "8dp"
-        self.spacing = "8dp"
-        self.elevation = 4
-        self.radius = [12]
-        self.md_bg_color = (0.15, 0.15, 0.15, 1) if not achieved else (0.1, 0.4, 0.1, 1)
+STEAM_API_KEY = 'your_api_key'
+STEAM_USER_ID = 'your_steam_id'
 
-        layout = MDBoxLayout(orientation="horizontal", spacing="10dp")
-
-        icon = AsyncImage(
-            source=icon_url,
-            size_hint=(None, None),
-            size=("64dp", "64dp"),
-            allow_stretch=True,
-            keep_ratio=True
-        )
-
-        text_box = MDBoxLayout(orientation="vertical", spacing="5dp")
-
-        text_box.add_widget(MDLabel(
-            text=name,
-            font_size="18sp",
-            bold=True,
-            theme_text_color="Custom",
-            text_color=(1, 1, 1, 1),
-            halign="left"
-        ))
-
-        text_box.add_widget(MDLabel(
-            text=description,
-            font_size="14sp",
-            theme_text_color="Custom",
-            text_color=(0.9, 0.9, 0.9, 1),
-            halign="left"
-        ))
-
-        layout.add_widget(icon)
-        layout.add_widget(text_box)
-        self.add_widget(layout)
-
-class AchievementsApp(MDApp):
+class MainApp(MDApp):
     def build(self):
         self.theme_cls.primary_palette = "Blue"
-        Clock.schedule_once(self.load_achievements, 1)
         return Builder.load_string(KV)
 
-    def load_achievements(self, *args):
-        data = get_steam_achievements(API_KEY, STEAM_ID, APP_ID)
-        achievement_list = self.root.ids.achievements_list
-        achievement_list.clear_widgets()
+    def on_start(self):
+        self.load_steam_games()
 
-        if "playerstats" in data and "achievements" in data["playerstats"]:
-            for ach in data["playerstats"]["achievements"]:
-                name = ach.get("name", ach.get("apiname", "Unknown"))
-                desc = ach.get("description", "")
-                achieved = ach.get("achieved", 0)
-                icon_url = ach.get("icon") if achieved else ach.get("icongray")
+    def load_steam_games(self):
+        url = f"https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/"
+        params = {
+            'key': STEAM_API_KEY,
+            'steamid': STEAM_USER_ID,
+            'include_appinfo': True,
+            'include_played_free_games': True
+        }
 
-                if not icon_url:
-                    icon_url = "https://via.placeholder.com/64"  # fallback
+        try:
+            response = requests.get(url, params=params)
+            data = response.json()
 
-                print(f"Загрузка иконки: {icon_url}")
-                card = AchievementCard(name, desc, icon_url, achieved)
-                achievement_list.add_widget(card)
-        else:
-            print("Нет достижений или ошибка при загрузке данных.")
+            list_container = MDBoxLayout(orientation="vertical", spacing=4, padding=4)
+            for game in data['response'].get('games', []):
+                icon_url = f"http://media.steampowered.com/steamcommunity/public/images/apps/{game['appid']}/{game['img_icon_url']}.jpg"
+                item = MDListItem()
+                item.add_widget(
+                    MDListItemLeading(
+                        AsyncImage(source=icon_url, size_hint=(None, None), size=(48, 48))
+                    )
+                )
+                item.add_widget(MDListItemText(text=game['name']))
+                list_container.add_widget(item)
 
-AchievementsApp().run()
+            self.root.ids.scroll.add_widget(list_container)
+
+        except Exception as e:
+            print(f"Error loading games: {e}")
+
+MainApp().run()
