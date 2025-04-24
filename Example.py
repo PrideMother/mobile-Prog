@@ -1,89 +1,45 @@
 from kivy.lang import Builder
-from kivy.properties import StringProperty
+from kivy.metrics import dp
 
 from kivymd.app import MDApp
-from kivymd.uix.navigationbar import MDNavigationBar, MDNavigationItem
-from kivymd.uix.screen import MDScreen
-
-
-class BaseMDNavigationItem(MDNavigationItem):
-    icon = StringProperty()
-    text = StringProperty()
-
-
-class BaseScreen(MDScreen):
-    image_size = StringProperty()
-
+from kivymd.uix.menu import MDDropdownMenu
+from kivymd.uix.snackbar import Snackbar
 
 KV = '''
-<BaseMDNavigationItem>
-
-    MDNavigationItemIcon:
-        icon: root.icon
-
-    MDNavigationItemLabel:
-        text: root.text
-
-
-<BaseScreen>
-
-    FitImage:
-        source: f"https://picsum.photos/{root.image_size}/{root.image_size}"
-        size_hint: .9, .9
-        pos_hint: {"center_x": .5, "center_y": .5}
-        radius: dp(24)
-
-
 MDBoxLayout:
     orientation: "vertical"
-    md_bg_color: self.theme_cls.backgroundColor
 
-    MDScreenManager:
-        id: screen_manager
+    MDTopAppBar:
+        title: "MDTopAppBar"
+        left_action_items: [["menu", lambda x: app.callback(x)]]
+        right_action_items: [["dots-vertical", lambda x: app.callback(x)]]
 
-        BaseScreen:
-            name: "Screen 1"
-            image_size: "1024"
-
-        BaseScreen:
-            name: "Screen 2"
-            image_size: "800"
-
-        BaseScreen:
-            name: "Screen 3"
-            image_size: "600"
-
-
-    MDNavigationBar:
-        on_switch_tabs: app.on_switch_tabs(*args)
-
-        BaseMDNavigationItem
-            icon: "gmail"
-            text: "Screen 1"
-            active: True
-
-        BaseMDNavigationItem
-            icon: "twitter"
-            text: "Screen 2"
-
-        BaseMDNavigationItem
-            icon: "linkedin"
-            text: "Screen 3"
+    MDLabel:
+        text: "Content"
+        halign: "center"
 '''
 
 
-class Example(MDApp):
-    def on_switch_tabs(
-        self,
-        bar: MDNavigationBar,
-        item: MDNavigationItem,
-        item_icon: str,
-        item_text: str,
-    ):
-        self.root.ids.screen_manager.current = item_text
-
+class Test(MDApp):
     def build(self):
+        self.theme_cls.primary_palette = "Orange"
+        self.theme_cls.theme_style = "Dark"
+        menu_items = [
+            {
+                "text": f"Item {i}",
+                "on_release": lambda x=f"Item {i}": self.menu_callback(x),
+            } for i in range(5)
+        ]
+        self.menu = MDDropdownMenu(items=menu_items)
         return Builder.load_string(KV)
 
+    def callback(self, button):
+        self.menu.caller = button
+        self.menu.open()
 
-Example().run()
+    def menu_callback(self, text_item):
+        self.menu.dismiss()
+        Snackbar(text=text_item).open()
+
+
+Test().run()

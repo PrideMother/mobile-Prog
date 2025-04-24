@@ -28,7 +28,7 @@ KV = '''
 <BaseScreen>
 
     FitImage:
-        source: f"https://picsum.photos/{root.image_size}/{root.image_size}"
+        
         size_hint: .9, .9
         pos_hint: {"center_x": .5, "center_y": .5}
         radius: dp(24)
@@ -42,15 +42,19 @@ MDBoxLayout:
         id: screen_manager
 
         BaseScreen:
-            name: "Screen 1"
+            name: "Игры"
             image_size: "1024"
 
         BaseScreen:
-            name: "Screen 2"
+            name: "Мои платины"
             image_size: "800"
 
         BaseScreen:
-            name: "Screen 3"
+            name: "Сообщения"
+            image_size: "600"
+            
+        BaseScreen:
+            name: "Мой профиль"
             image_size: "600"
 
 
@@ -58,21 +62,25 @@ MDBoxLayout:
         on_switch_tabs: app.on_switch_tabs(*args)
 
         BaseMDNavigationItem
-            icon: "gmail"
-            text: "Screen 1"
+            icon: "controller"
+            text: "Игры"
             active: True
 
         BaseMDNavigationItem
-            icon: "twitter"
-            text: "Screen 2"
+            icon: "gamepad-circle"
+            text: "Мои платины"
 
-        BaseMDNavigationItem
-            icon: "linkedin"
-            text: "Screen 3"
+        BaseMDNavigationItem:
+            icon: "message"
+            text: "Сообщения"
+        
+        BaseMDNavigationItem:
+            icon: "account"
+            text: "Мой профиль"
 '''
 
 
-class Example(MDApp):
+class Prog(MDApp):
     def on_switch_tabs(
         self,
         bar: MDNavigationBar,
@@ -86,4 +94,4 @@ class Example(MDApp):
         return Builder.load_string(KV)
 
 
-Example().run()
+Prog().run()
