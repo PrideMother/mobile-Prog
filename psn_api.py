@@ -38,6 +38,7 @@ MDScreen:
                 id: achievements_list
 '''
 
+
 class AchievementCard(MDCard):
     def __init__(self, name, description, icon_url, achieved, **kwargs):
         super().__init__(**kwargs)
@@ -82,6 +83,7 @@ class AchievementCard(MDCard):
         layout.add_widget(text_box)
         self.add_widget(layout)
 
+
 class AchievementsApp(MDApp):
     def build(self):
         self.theme_cls.primary_palette = "Blue"
@@ -108,5 +110,6 @@ class AchievementsApp(MDApp):
                 achievement_list.add_widget(card)
         else:
             print("Нет достижений или ошибка при загрузке данных.")
+
 
 AchievementsApp().run()
